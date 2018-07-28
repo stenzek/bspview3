@@ -20,7 +20,10 @@ Buffer::~Buffer()
 {
   const size_t index = BufferTypeIndex(m_type);
   if (s_last_buffer[index] != m_id)
+  {
+    glDeleteBuffers(1, &m_id);
     return;
+  }
 
   if (m_type == Type::VertexBuffer)
     VertexArray::TemporaryUnbind();
@@ -30,6 +33,8 @@ Buffer::~Buffer()
 
   if (m_type == Type::VertexBuffer)
     VertexArray::TemporaryRebind();
+
+  glDeleteBuffers(1, &m_id);
 }
 
 void Buffer::Bind()
