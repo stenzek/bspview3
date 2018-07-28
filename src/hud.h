@@ -15,12 +15,31 @@ public:
   HUD();
   ~HUD();
 
+  u32 GetViewportWidth() const { return m_viewport_width; }
+  u32 GetViewportHeight() const { return m_viewport_height; }
+
   bool Initialize();
   void Shutdown();
 
   void SetViewportSize(u32 width, u32 height);
 
   void Draw3DWireBox(const Camera& camera, const glm::vec3& box_min, const glm::vec3& box_max, u32 color);
+
+  float GetClipSpaceX(float pos) const;
+  float GetClipSpaceY(float pos) const;
+
+  bool BeginDraw(u32 primitive_type);
+
+  void AddVertex2D(s32 x, s32 y, float u, float v, u32 color);
+  void AddVertex2D(float x, float y, float u, float v, u32 color);
+  void AddVertex2DClipSpace(float x, float y, float u, float v, u32 color);
+  void AddVertex3D(float x, float y, float z, float u, float v, u32 color);
+
+  void FlushDraw();
+  void EndDraw();
+
+  static const VertexAttribute* GetHUDVertexAttributes() { return s_hud_vertex_attributes; }
+  static size_t GetHUDVertexAttributeCount() { return ARRAY_SIZE(s_hud_vertex_attributes); }
 
 private:
   static const u32 VERTEX_BUFFER_SIZE = 16384;
@@ -39,19 +58,6 @@ private:
 
   bool CreateBuffers();
   bool CompilePrograms(u32 glsl_version);
-
-  float GetClipSpaceX(float pos) const;
-  float GetClipSpaceY(float pos) const;
-
-  bool BeginDraw(u32 primitive_type);
-
-  void AddVertex2D(s32 x, s32 y, float u, float v, u32 color);
-  void AddVertex2D(float x, float y, float u, float v, u32 color);
-  void AddVertex2DClipSpace(float x, float y, float u, float v, u32 color);
-  void AddVertex3D(float x, float y, float z, float u, float v, u32 color);
-
-  void FlushDraw();
-  void EndDraw();
 
   u32 m_viewport_width = 1;
   u32 m_viewport_height = 1;

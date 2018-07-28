@@ -209,7 +209,7 @@ float HUD::GetClipSpaceX(float pos) const
 float HUD::GetClipSpaceY(float pos) const
 {
   // 0..height -> 0..1 -> 1..-1
-  return pos * m_rcp_viewport_width * -2.0f + 1.0f;
+  return pos * m_rcp_viewport_height * -2.0f + 1.0f;
 }
 
 bool HUD::BeginDraw(u32 primitive_type)

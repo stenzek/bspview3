@@ -12,23 +12,21 @@ class Font
 public:
   ~Font();
 
-  void RenderText(s32 x, s32 y, u32 viewport_width, u32 viewport_height, u32 color, const char* text);
-  void RenderFormattedText(s32 x, s32 y, u32 viewport_width, u32 viewport_height, u32 color, const char* format, ...);
+  s32 GetTextWidth(const char* text);
+  void RenderText(s32 x, s32 y, u32 color, const char* text);
+  void RenderFormattedText(s32 x, s32 y, u32 color, const char* format, ...);
 
   static std::unique_ptr<Font> Create();
 
 private:
   static const size_t NUM_CHARS = 256;
 
-  Font(std::unique_ptr<ShaderProgram> program, std::unique_ptr<Texture> texture, std::unique_ptr<Buffer> buffer,
-       std::unique_ptr<VertexArray> vertex_array);
+  Font(std::unique_ptr<ShaderProgram> program, std::unique_ptr<Texture> texture);
 
   void FillGlyphInfo();
 
   std::unique_ptr<ShaderProgram> m_program;
   std::unique_ptr<Texture> m_texture;
-  std::unique_ptr<Buffer> m_vertex_buffer;
-  std::unique_ptr<VertexArray> m_vertex_array;
 
   struct GlyphInfo
   {
