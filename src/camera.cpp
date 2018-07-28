@@ -81,7 +81,7 @@ void Camera::UpdateViewMatrix()
 void Camera::UpdateProjectionMatrix()
 {
   // TODO: Customizable znear/far
-  m_projection_matrix = glm::perspective(m_field_of_view, m_aspect_ratio, 1.0f, 10000.0f);
+  m_projection_matrix = glm::perspective(glm::radians(m_field_of_view), m_aspect_ratio, 1.0f, 10000.0f);
   UpdateViewProjectionMatrix();
 }
 

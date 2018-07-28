@@ -19,6 +19,7 @@ static std::unique_ptr<BSP> s_bsp;
 static std::unique_ptr<BSPRenderer> s_bsp_renderer;
 static std::unique_ptr<Font> s_font;
 static SDL_Window* s_window;
+static u32 s_window_width, s_window_height;
 static Camera s_camera;
 static bool s_mouse_captured = false;
 static std::chrono::steady_clock::time_point s_last_frame_time;
@@ -80,29 +81,34 @@ void Render()
   s_last_frame_time = time_now;
   g_num_draws = 0;
 
+  s_camera.SetAspectRatio(s_window_width, s_window_height);
   s_camera.Update(time_diff);
 
   glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
   glClearDepth(1.0f);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-  glViewport(0, 0, 640, 480);
+  glViewport(0, 0, s_window_width, s_window_height);
   glDepthRange(0.0, 1.0);
 
-  g_hud->SetViewportSize(640, 480);
+  g_hud->SetViewportSize(s_window_width, s_window_height);
 
   s_bsp_renderer->Render(s_camera);
 
-  s_font->RenderFormattedText(4, 4, Colors::White, "%u draws", g_statistics->GetLastFrameNumDraws());
-  s_font->RenderFormattedText(640 - 256, 4, Colors::White, "%.2f fps (%.2f ms)", g_statistics->GetLastFPS(),
-                              g_statistics->GetLastFrameTime() * 1000.0f);
-
   {
-    const BSP::Leaf* leaf = s_bsp->FindLeafForPosition(s_camera.GetPosition());
-    if (!leaf)
-      s_font->RenderText(4, 16, Colors::Red, "Not in a leaf");
+    s_font->RenderFormattedText(g_hud->GetViewportWidth() - 180, 4, Colors::White, "%.2f fps (%.2f ms)",
+                                g_statistics->GetLastFPS(), g_statistics->GetLastFrameTime() * 1000.0f);
+    s_font->RenderFormattedText(g_hud->GetViewportWidth() - 180, 18, Colors::White, "%u draw calls",
+                                g_statistics->GetLastFrameNumDraws());
+
+    s_font->RenderFormattedText(4, 4, Colors::White, "Camera Position: %.4f %.4f %.4f", s_camera.GetPosition().x,
+                                s_camera.GetPosition().y, s_camera.GetPosition().z);
+    const BSP::Leaf* camera_leaf = s_bsp->FindLeafForPosition(s_camera.GetPosition());
+    if (!camera_leaf)
+      s_font->RenderText(4, 18, Colors::Red, "Not in a leaf");
     else
-      s_font->RenderFormattedText(4, 16, Colors::Green, "Leaf: %u (cluster %d)", leaf->index, leaf->cluster);
+      s_font->RenderFormattedText(4, 18, Colors::Green, "Leaf: %u (cluster %d)", camera_leaf->index,
+                                  camera_leaf->cluster);
   }
 
   SDL_GL_SwapWindow(s_window);
@@ -148,6 +154,11 @@ void MainLoop()
       {
         switch (ev.window.event)
         {
+          case SDL_WINDOWEVENT_RESIZED:
+            s_window_width = static_cast<u32>(ev.window.data1);
+            s_window_height = static_cast<u32>(ev.window.data2);
+            break;
+
           case SDL_WINDOWEVENT_FOCUS_GAINED:
             CaptureMouse();
             break;
@@ -159,10 +170,13 @@ void MainLoop()
       }
       else if (ev.type == SDL_MOUSEMOTION)
       {
-        if (ev.motion.xrel != 0)
-          s_camera.ModYaw(float(-ev.motion.xrel));
-        if (ev.motion.yrel != 0)
-          s_camera.ModPitch(float(-ev.motion.yrel));
+        if (s_mouse_captured)
+        {
+          if (ev.motion.xrel != 0)
+            s_camera.ModYaw(float(-ev.motion.xrel) * 0.5f);
+          if (ev.motion.yrel != 0)
+            s_camera.ModPitch(float(-ev.motion.yrel) * 0.5f);
+        }
       }
       else if (ev.type == SDL_KEYDOWN || ev.type == SDL_KEYUP)
       {
@@ -212,9 +226,15 @@ int main(int argc, char* argv[])
   if (SDL_Init(SDL_INIT_VIDEO) < 0)
     return EXIT_FAILURE;
 
-  s_window = SDL_CreateWindow("q3mv", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 640, 480, SDL_WINDOW_OPENGL);
+  s_window = SDL_CreateWindow("bspview3", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 1280, 720,
+                              SDL_WINDOW_RESIZABLE | SDL_WINDOW_OPENGL);
   if (!s_window)
     return EXIT_FAILURE;
+
+  int window_width, window_height;
+  SDL_GetWindowSize(s_window, &window_width, &window_height);
+  s_window_width = static_cast<u32>(window_width);
+  s_window_height = static_cast<u32>(window_height);
 
   SDL_GL_SetAttribute(SDL_GL_RED_SIZE, 8);
   SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 8);

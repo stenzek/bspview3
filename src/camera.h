@@ -64,14 +64,14 @@ private:
   glm::vec3 m_move_vector{0.0f, 0.0f, 0.0f};
 
   float m_aspect_ratio = 640.0f / 480.0f;
-  float m_field_of_view = 45.0f;
+  float m_field_of_view = 55.0f;
 
   glm::mat4 m_view_matrix;
   glm::mat4 m_projection_matrix;
   glm::mat4 m_view_projection_matrix;
 
   Frustum m_frustum;
-  float m_move_speed = 100.0f;
-  float m_turbo_coefficient = 10.0f;
+  float m_move_speed = 350.0f;
+  float m_turbo_coefficient = 4.0f;
   bool m_turbo = false;
 };
