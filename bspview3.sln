@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.27703.2035
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "glad", "dep\glad\glad.vcxproj", "{D654FCA9-E814-4B2D-A817-AFB17D3AEA03}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "bspview3", "src\bspview3.vcxproj", "{959C5FB0-DBD8-4F9D-AAFF-0A989DC44B24}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x86 = Debug|x86
+		Release|x86 = Release|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{D654FCA9-E814-4B2D-A817-AFB17D3AEA03}.Debug|x86.ActiveCfg = Debug|Win32
+		{D654FCA9-E814-4B2D-A817-AFB17D3AEA03}.Debug|x86.Build.0 = Debug|Win32
+		{D654FCA9-E814-4B2D-A817-AFB17D3AEA03}.Release|x86.ActiveCfg = Release|Win32
+		{D654FCA9-E814-4B2D-A817-AFB17D3AEA03}.Release|x86.Build.0 = Release|Win32
+		{959C5FB0-DBD8-4F9D-AAFF-0A989DC44B24}.Debug|x86.ActiveCfg = Debug|Win32
+		{959C5FB0-DBD8-4F9D-AAFF-0A989DC44B24}.Debug|x86.Build.0 = Debug|Win32
+		{959C5FB0-DBD8-4F9D-AAFF-0A989DC44B24}.Release|x86.ActiveCfg = Release|Win32
+		{959C5FB0-DBD8-4F9D-AAFF-0A989DC44B24}.Release|x86.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {3FF54A37-C349-4F11-981B-18321232DE10}
+	EndGlobalSection
+EndGlobal
