@@ -19,11 +19,17 @@ Buffer::Buffer(Type type, size_t size, u32 id, bool dynamic) : m_type(type), m_s
 Buffer::~Buffer()
 {
   const size_t index = BufferTypeIndex(m_type);
-  if (s_last_buffer[index] == m_id)
+  if (s_last_buffer[index] != m_id)
     return;
+
+  if (m_type == Type::VertexBuffer)
+    VertexArray::TemporaryUnbind();
 
   glBindBuffer(s_gl_types[index], 0);
   s_last_buffer[index] = 0;
+
+  if (m_type == Type::VertexBuffer)
+    VertexArray::TemporaryRebind();
 }
 
 void Buffer::Bind()
