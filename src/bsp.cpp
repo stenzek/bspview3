@@ -140,6 +140,7 @@ std::unique_ptr<BSP> BSP::Load(std::FILE* fp)
   bsp->LoadFaces(&idata);
   bsp->LoadLeaves(&idata);
   bsp->LoadNodes(&idata);
+  bsp->LoadVisData(&idata);
 
   if (idata.load_error)
   {
@@ -150,6 +151,45 @@ std::unique_ptr<BSP> BSP::Load(std::FILE* fp)
   bsp->TesselatePatches();
 
   return std::move(bsp);
+}
+
+const BSP::Leaf* BSP::FindLeafForPosition(const glm::vec3& pos) const
+{
+  s32 node_index = 0;
+  while (node_index >= 0)
+  {
+    const Node& node = m_nodes[node_index];
+    if (glm::dot(node.plane.GetNormal(), pos) >= node.plane.GetDistance())
+      node_index = node.children[0];
+    else
+      node_index = node.children[1];
+  }
+
+  const Leaf& leaf = m_leaves[~node_index];
+#if 0
+  if (pos.x >= leaf.bbox_min.x && pos.x <= leaf.bbox_max.x && pos.y >= leaf.bbox_min.y &&
+      pos.y <= leaf.bbox_max.y && pos.z >= leaf.bbox_min.z && pos.z <= leaf.bbox_max.z)
+  {
+    return &leaf;
+  }
+  else
+  {
+    return nullptr;
+  }
+#else
+  return &leaf;
+#endif
+}
+
+bool BSP::IsClusterVisible(s32 from_cluster, s32 to_cluster) const
+{
+  if (from_cluster < 0 || to_cluster < 0)
+    return true;
+
+  u32 byte_index = u32(to_cluster) * m_visdata.bytes_per_cluster + u32(from_cluster / 8);
+  u32 bit_index = u32(from_cluster % 8);
+  assert(byte_index < m_visdata.data.size());
+  return (m_visdata.data[byte_index] & (1 << bit_index)) != 0;
 }
 
 template<typename ElementType>
@@ -268,6 +308,7 @@ void BSP::LoadNodes(IntermediateData* idata)
       }
     }
 
+    nout.index = u32(i);
     nout.bbox_min = glm::vec3(float(nin.bbox_min[0]), float(nin.bbox_min[1]), float(nin.bbox_min[2]));
     nout.bbox_max = glm::vec3(float(nin.bbox_max[0]), float(nin.bbox_max[1]), float(nin.bbox_max[2]));
   }
@@ -284,6 +325,7 @@ void BSP::LoadLeaves(IntermediateData* idata)
 
     lout.bbox_min = glm::vec3(float(lin.bbox_min[0]), float(lin.bbox_min[1]), float(lin.bbox_min[2]));
     lout.bbox_max = glm::vec3(float(lin.bbox_max[0]), float(lin.bbox_max[1]), float(lin.bbox_max[2]));
+    lout.index = u32(i);
     lout.cluster = lin.cluster;
     lout.area = lin.area;
 
@@ -507,4 +549,31 @@ void BSP::LoadLightMaps(IntermediateData* idata)
     LightMap& dst = m_lightmaps[i];
     std::memcpy(dst.data, src.data, sizeof(dst.data));
   }
+}
+
+void BSP::LoadVisData(IntermediateData* idata)
+{
+  auto visdata = LoadLump<u8>(idata, LUMP_VISDATA);
+  if (visdata.size() < 8)
+  {
+    std::fprintf(stderr, "Visdata missing header.\n");
+    idata->load_error = true;
+    return;
+  }
+
+  u32 cluster_count, bytes_per_cluster;
+  std::memcpy(&cluster_count, &visdata[0], sizeof(cluster_count));
+  std::memcpy(&bytes_per_cluster, &visdata[4], sizeof(bytes_per_cluster));
+
+  if (visdata.size() < ((cluster_count * bytes_per_cluster) + 8))
+  {
+    std::fprintf(stderr, "Visdata missing data.\n");
+    idata->load_error = true;
+    return;
+  }
+
+  m_visdata.num_clusters = cluster_count;
+  m_visdata.bytes_per_cluster = bytes_per_cluster;
+  m_visdata.data.resize(cluster_count * bytes_per_cluster);
+  std::memcpy(m_visdata.data.data(), &visdata[8], cluster_count * bytes_per_cluster);
 }

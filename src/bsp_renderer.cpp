@@ -171,6 +171,7 @@ BSPRenderer::RenderLeaf BSPRenderer::CreateRenderLeaf(const BSP::Leaf* leaf, std
   RenderLeaf rleaf;
   rleaf.bbox_min = leaf->bbox_min;
   rleaf.bbox_max = leaf->bbox_max;
+  rleaf.cluster = leaf->cluster;
 
   for (size_t i = 0; i < leaf->faces.size(); i++)
   {
@@ -304,25 +305,10 @@ bool BSPRenderer::CreateShaders()
   return true;
 }
 
-#if 0
-int FindNodeIndex(const glm::vec3& pos)
+static void DrawLeafBounds(const Camera& camera, s32 camera_cluster, const BSP* bsp, const BSP::Leaf* leaf)
 {
-  int index = 0;
-  while (index >= 0)
-  {
-    const auto& node = m_bsp->GetNode(index);
-    if (glm::dot(node.plane, pos) >= plane.mDistance)
-      index = node.mChildren[0];
-    else
-      index = node.mChildren[1];
-  }
-
-  return ~index;
-}
-
-static void DrawLeafBounds(const Camera& camera, const BSP::Leaf* leaf)
-{
-  if (!camera.GetFrustum().IntersectsAABox(leaf->bbox_min, leaf->bbox_max))
+  if (!camera.GetFrustum().IntersectsAABox(leaf->bbox_min, leaf->bbox_max) ||
+      !bsp->IsClusterVisible(camera_cluster, leaf->cluster))
   {
     g_hud->Draw3DWireBox(camera, leaf->bbox_min, leaf->bbox_max, Colors::Red);
     return;
@@ -331,7 +317,7 @@ static void DrawLeafBounds(const Camera& camera, const BSP::Leaf* leaf)
   g_hud->Draw3DWireBox(camera, leaf->bbox_min, leaf->bbox_max, Colors::Green);
 }
 
-static void DrawNodeBounds(const Camera& camera, const BSP* bsp, const BSP::Node* node)
+static void DrawNodeBounds(const Camera& camera, s32 camera_cluster, const BSP* bsp, const BSP::Node* node)
 {
   if (!camera.GetFrustum().IntersectsAABox(node->bbox_min, node->bbox_max))
   {
@@ -342,13 +328,11 @@ static void DrawNodeBounds(const Camera& camera, const BSP* bsp, const BSP::Node
   for (u32 i = 0; i < 2; i++)
   {
     if (node->children[i] < 0)
-      DrawLeafBounds(camera, bsp->GetLeaf(~node->children[i]));
+      DrawLeafBounds(camera, camera_cluster, bsp, bsp->GetLeaf(~node->children[i]));
     else
-      DrawNodeBounds(camera, bsp, bsp->GetNode(node->children[i]));
+      DrawNodeBounds(camera, camera_cluster, bsp, bsp->GetNode(node->children[i]));
   }
 }
-
-#endif
 
 void BSPRenderer::Render(const Camera& camera) const
 {
@@ -369,16 +353,22 @@ void BSPRenderer::Render(const Camera& camera) const
   glDepthMask(GL_TRUE);
   glDepthFunc(GL_LESS);
 
+  const BSP::Leaf* leaf_for_camera = m_bsp->FindLeafForPosition(camera.GetPosition());
+  s32 cluster_for_camera = leaf_for_camera ? leaf_for_camera->cluster : -1;
+
 #if 1
-  DrawNode(camera, m_bsp->GetRootNode());
-  // DrawNodeBounds(camera, m_bsp->GetRootNode());
+  DrawNode(camera, cluster_for_camera, m_bsp->GetRootNode());
+#if 0
+  glDisable(GL_DEPTH_TEST);
+  DrawNodeBounds(camera, cluster_for_camera, m_bsp, m_bsp->GetRootNode());
+#endif
 #else
   for (const RenderLeaf& leaf : m_render_leaves)
     DrawLeaf(camera, leaf);
 #endif
 }
 
-void BSPRenderer::DrawNode(const Camera& camera, const BSP::Node* node) const
+void BSPRenderer::DrawNode(const Camera& camera, s32 camera_cluster, const BSP::Node* node) const
 {
   if (!camera.GetFrustum().IntersectsAABox(node->bbox_min, node->bbox_max))
     return;
@@ -388,20 +378,23 @@ void BSPRenderer::DrawNode(const Camera& camera, const BSP::Node* node) const
   const u32 first_child = (side == Plane::Side::BehindPlane) ? 1 : 0;
   const u32 second_child = first_child ^ 1u;
   if (node->children[first_child] < 0)
-    DrawLeaf(camera, m_render_leaves[~node->children[first_child]]);
+    DrawLeaf(camera, camera_cluster, m_render_leaves[~node->children[first_child]]);
   else
-    DrawNode(camera, m_bsp->GetNode(node->children[first_child]));
+    DrawNode(camera, camera_cluster, m_bsp->GetNode(node->children[first_child]));
 
   if (node->children[second_child] < 0)
-    DrawLeaf(camera, m_render_leaves[~node->children[second_child]]);
+    DrawLeaf(camera, camera_cluster, m_render_leaves[~node->children[second_child]]);
   else
-    DrawNode(camera, m_bsp->GetNode(node->children[second_child]));
+    DrawNode(camera, camera_cluster, m_bsp->GetNode(node->children[second_child]));
 }
 
-void BSPRenderer::DrawLeaf(const Camera& camera, const RenderLeaf& leaf) const
+void BSPRenderer::DrawLeaf(const Camera& camera, s32 camera_cluster, const RenderLeaf& leaf) const
 {
-  if (!camera.GetFrustum().IntersectsAABox(leaf.bbox_min, leaf.bbox_max))
+  if (leaf.batches.empty() || !m_bsp->IsClusterVisible(camera_cluster, leaf.cluster) ||
+      !camera.GetFrustum().IntersectsAABox(leaf.bbox_min, leaf.bbox_max))
+  {
     return;
+  }
 
   for (const RenderLeaf::Batch& batch : leaf.batches)
   {

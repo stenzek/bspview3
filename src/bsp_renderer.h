@@ -38,6 +38,7 @@ private:
     };
 
     std::vector<Batch> batches;
+    s32 cluster;
   };
 
   bool LoadTextures();
@@ -50,9 +51,8 @@ private:
   bool CreateRenderLeaves();
   RenderLeaf CreateRenderLeaf(const BSP::Leaf* leaf, std::vector<u32>& indices) const;
 
-  void DrawNode(const Camera& camera, const BSP::Node* node) const;
-  void DrawLeaf(const Camera& camera, const RenderLeaf& leaf) const;
-  void DrawNodeBounds(const Camera& camera) const;
+  void DrawNode(const Camera& camera, s32 camera_cluster, const BSP::Node* node) const;
+  void DrawLeaf(const Camera& camera, s32 camera_cluster, const RenderLeaf& leaf) const;
 
   const BSP* m_bsp;
 

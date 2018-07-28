@@ -97,6 +97,14 @@ void Render()
   s_font->RenderFormattedText(640 - 256, 4, 640, 480, Colors::White, "%.2f fps (%.2f ms)", g_statistics->GetLastFPS(),
                               g_statistics->GetLastFrameTime() * 1000.0f);
 
+  {
+    const BSP::Leaf* leaf = s_bsp->FindLeafForPosition(s_camera.GetPosition());
+    if (!leaf)
+      s_font->RenderText(4, 16, 640, 480, Colors::Red, "Not in a leaf");
+    else
+      s_font->RenderFormattedText(4, 16, 640, 480, Colors::Green, "Leaf: %u (cluster %d)", leaf->index, leaf->cluster);
+  }
+
   SDL_GL_SwapWindow(s_window);
 
   g_statistics->EndFrame();

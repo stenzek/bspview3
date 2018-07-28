@@ -113,6 +113,7 @@ public:
     std::vector<u32> brushes;
     glm::vec3 bbox_min;
     glm::vec3 bbox_max;
+    u32 index;
     int cluster;
     int area;
   };
@@ -123,6 +124,7 @@ public:
     Plane plane;
     glm::vec3 bbox_min;
     glm::vec3 bbox_max;
+    u32 index;
     s32 children[2];
   };
 
@@ -136,6 +138,13 @@ public:
   struct LightMap
   {
     u8 data[LIGHTMAP_SIZE][LIGHTMAP_SIZE][3];
+  };
+
+  struct VisData
+  {
+    u32 num_clusters;
+    u32 bytes_per_cluster;
+    std::vector<u8> data;
   };
 
   ~BSP();
@@ -171,6 +180,10 @@ public:
   const LightMap* GetLightMap(size_t i) const { return &m_lightmaps[i]; }
   const std::vector<LightMap>& GetLightMaps() const { return m_lightmaps; }
 
+  const BSP::Leaf* FindLeafForPosition(const glm::vec3& pos) const;
+
+  bool IsClusterVisible(s32 from_cluster, s32 to_cluster) const;
+
 private:
   struct IntermediateData
   {
@@ -201,6 +214,7 @@ private:
   void LoadLeaves(IntermediateData* idata);
   void LoadFaces(IntermediateData* idata);
   void LoadLightMaps(IntermediateData* idata);
+  void LoadVisData(IntermediateData* idata);
 
   void TesselatePatches();
 
@@ -211,4 +225,5 @@ private:
   std::vector<Leaf> m_leaves;
   std::vector<Face> m_faces;
   std::vector<LightMap> m_lightmaps;
+  VisData m_visdata;
 };
