@@ -2,6 +2,7 @@
 #include "font.h"
 #include "buffer.h"
 #include "shader.h"
+#include "statistics.h"
 #include "texture.h"
 #include "util.h"
 #include "vertex_array.h"
@@ -901,7 +902,7 @@ void main()
 }
 )";
 
-static const VertexAttribute s_font_vertex_attributes[] = {
+static const VertexAttribute s_hud_vertex_attributes[] = {
   {"in_position", GL_FLOAT, 2, 0, offsetof(FontVertex, pos), sizeof(FontVertex), false},
   {"in_tex0", GL_FLOAT, 2, 0, offsetof(FontVertex, tex), sizeof(FontVertex), false},
   {"in_color", GL_UNSIGNED_BYTE, 4, 0, offsetof(FontVertex, col), sizeof(FontVertex), true}};
@@ -967,7 +968,10 @@ void Font::RenderText(s32 x, s32 y, u32 viewport_width, u32 viewport_height, u32
 
     m_vertex_buffer->Unmap();
     if (num_vertices > 0)
+    {
       glDrawArrays(GL_TRIANGLES, 0, num_vertices);
+      g_statistics->AddDraw();
+    }
   }
 
   glDisable(GL_BLEND);
@@ -1016,7 +1020,7 @@ std::unique_ptr<Font> Font::Create()
     return nullptr;
 
   std::unique_ptr<ShaderProgram> program = ShaderProgram::Create(
-    s_font_vertex_attributes, ARRAY_SIZE(s_font_vertex_attributes), vertex_shader.get(), fragment_shader.get(), 1);
+    s_hud_vertex_attributes, ARRAY_SIZE(s_hud_vertex_attributes), vertex_shader.get(), fragment_shader.get(), 1);
   if (!program)
     return nullptr;
 
@@ -1026,7 +1030,7 @@ std::unique_ptr<Font> Font::Create()
 
   const Buffer* vao_buffers[1] = {buffer.get()};
   std::unique_ptr<VertexArray> vertex_array =
-    VertexArray::Create(s_font_vertex_attributes, ARRAY_SIZE(s_font_vertex_attributes), vao_buffers);
+    VertexArray::Create(s_hud_vertex_attributes, ARRAY_SIZE(s_hud_vertex_attributes), vao_buffers);
   if (!vertex_array)
     return nullptr;
 

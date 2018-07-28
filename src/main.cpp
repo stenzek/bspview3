@@ -2,9 +2,11 @@
 #include "bsp.h"
 #include "bsp_renderer.h"
 #include "camera.h"
+#include "colors.h"
 #include "common.h"
 #include "font.h"
 #include "glad.h"
+#include "hud.h"
 #include "resource_manager.h"
 #include "statistics.h"
 #include "util.h"
@@ -62,6 +64,9 @@ bool Setup()
   if (!s_font)
     return false;
 
+  if (!g_hud->Initialize())
+    return false;
+
   s_last_frame_time = std::chrono::high_resolution_clock::now();
   return true;
 }
@@ -81,25 +86,16 @@ void Render()
   glClearDepth(1.0f);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-  glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-  // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-
-  glEnable(GL_CULL_FACE);
-  // glDisable(GL_CULL_FACE);
-  glFrontFace(GL_CW);
-
-  glEnable(GL_DEPTH_TEST);
-  glDepthMask(GL_TRUE);
-  glDepthFunc(GL_LESS);
-
   glViewport(0, 0, 640, 480);
   glDepthRange(0.0, 1.0);
 
+  g_hud->SetViewportSize(640, 480);
+
   s_bsp_renderer->Render(s_camera);
 
-  s_font->RenderFormattedText(4, 4, 640, 480, Font::COLOR_WHITE, "%u draws", g_statistics->GetLastFrameNumDraws());
-  s_font->RenderFormattedText(640 - 256, 4, 640, 480, Font::COLOR_WHITE, "%.2f fps (%.2f ms)",
-                              g_statistics->GetLastFPS(), g_statistics->GetLastFrameTime() * 1000.0f);
+  s_font->RenderFormattedText(4, 4, 640, 480, Colors::White, "%u draws", g_statistics->GetLastFrameNumDraws());
+  s_font->RenderFormattedText(640 - 256, 4, 640, 480, Colors::White, "%.2f fps (%.2f ms)", g_statistics->GetLastFPS(),
+                              g_statistics->GetLastFrameTime() * 1000.0f);
 
   SDL_GL_SwapWindow(s_window);
 

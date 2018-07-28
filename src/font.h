@@ -10,14 +10,6 @@ class VertexArray;
 class Font
 {
 public:
-  enum : u32
-  {
-    COLOR_WHITE = 0xFFFFFFFF,
-    COLOR_RED = 0xFF0000FF,
-    COLOR_GREEN = 0xFF00FF00,
-    COLOR_BLUE = 0xFFFF0000
-  };
-
   ~Font();
 
   void RenderText(s32 x, s32 y, u32 viewport_width, u32 viewport_height, u32 color, const char* text);

@@ -52,6 +52,7 @@ private:
 
   void DrawNode(const Camera& camera, const BSP::Node* node) const;
   void DrawLeaf(const Camera& camera, const RenderLeaf& leaf) const;
+  void DrawNodeBounds(const Camera& camera) const;
 
   const BSP* m_bsp;
 

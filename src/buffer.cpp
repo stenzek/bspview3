@@ -69,7 +69,10 @@ void Buffer::Update(size_t offset, size_t count, const void* data)
 
   const size_t index = BufferTypeIndex(m_type);
   if (s_last_buffer[index] != m_id)
+  {
     glBindBuffer(s_gl_types[index], m_id);
+    s_last_buffer[index] = m_id;
+  }
 
   if (offset == 0 && count == count)
     glBufferData(s_gl_types[index], count, data, m_dynamic ? GL_DYNAMIC_DRAW : GL_STATIC_DRAW);
@@ -87,7 +90,10 @@ void* Buffer::Map(bool read /* = false */, bool write /* = true */)
 
   const size_t index = BufferTypeIndex(m_type);
   if (s_last_buffer[index] != m_id)
+  {
     glBindBuffer(s_gl_types[index], m_id);
+    s_last_buffer[index] = m_id;
+  }
 
   GLenum access = 0;
   if (read && !write)
@@ -112,7 +118,10 @@ void Buffer::Unmap()
 
   const size_t index = BufferTypeIndex(m_type);
   if (s_last_buffer[index] != m_id)
+  {
     glBindBuffer(s_gl_types[index], m_id);
+    s_last_buffer[index] = m_id;
+  }
 
   glUnmapBuffer(s_gl_types[index]);
 

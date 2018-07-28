@@ -3,6 +3,8 @@
 #include "bsp.h"
 #include "buffer.h"
 #include "camera.h"
+#include "colors.h"
+#include "hud.h"
 #include "resource_manager.h"
 #include "shader.h"
 #include "statistics.h"
@@ -317,6 +319,35 @@ int FindNodeIndex(const glm::vec3& pos)
 
   return ~index;
 }
+
+static void DrawLeafBounds(const Camera& camera, const BSP::Leaf* leaf)
+{
+  if (!camera.GetFrustum().IntersectsAABox(leaf->bbox_min, leaf->bbox_max))
+  {
+    g_hud->Draw3DWireBox(camera, leaf->bbox_min, leaf->bbox_max, Colors::Red);
+    return;
+  }
+
+  g_hud->Draw3DWireBox(camera, leaf->bbox_min, leaf->bbox_max, Colors::Green);
+}
+
+static void DrawNodeBounds(const Camera& camera, const BSP* bsp, const BSP::Node* node)
+{
+  if (!camera.GetFrustum().IntersectsAABox(node->bbox_min, node->bbox_max))
+  {
+    g_hud->Draw3DWireBox(camera, node->bbox_min, node->bbox_max, Colors::Red);
+    return;
+  }
+
+  for (u32 i = 0; i < 2; i++)
+  {
+    if (node->children[i] < 0)
+      DrawLeafBounds(camera, bsp->GetLeaf(~node->children[i]));
+    else
+      DrawNodeBounds(camera, bsp, bsp->GetNode(node->children[i]));
+  }
+}
+
 #endif
 
 void BSPRenderer::Render(const Camera& camera) const
@@ -327,8 +358,20 @@ void BSPRenderer::Render(const Camera& camera) const
   m_vertex_array->Bind();
   m_index_buffer->Bind();
 
-#if 0
+  glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+  // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+
+  glEnable(GL_CULL_FACE);
+  // glDisable(GL_CULL_FACE);
+  glFrontFace(GL_CW);
+
+  glEnable(GL_DEPTH_TEST);
+  glDepthMask(GL_TRUE);
+  glDepthFunc(GL_LESS);
+
+#if 1
   DrawNode(camera, m_bsp->GetRootNode());
+  // DrawNodeBounds(camera, m_bsp->GetRootNode());
 #else
   for (const RenderLeaf& leaf : m_render_leaves)
     DrawLeaf(camera, leaf);
